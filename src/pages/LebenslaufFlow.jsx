@@ -14,15 +14,16 @@ import AgbModal from "@/components/lebenslauf/AgbModal";
 import ImpressumModal from "@/components/lebenslauf/ImpressumModal";
 import { useAuth } from "@/lib/AuthContext";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Loader2, ChevronRight, Sparkles } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
+import JobfertigLogo from "@/components/JobfertigLogo";
 
-// ─── ATS Step Component ───────────────────────────────────────────────────────
-// Vollständig isoliert — berührt keine anderen Komponenten
-// resumeData wird nur über onOptimized() nach außen gegeben, nie direkt mutiert
+const STEPS = ["landing", "photo_intro", "photo_upload", "resume_upload", "confirm_edit", "edit", "ats", "select", "result"];
+
+// ─── ATS Step ────────────────────────────────────────────────────────────────
 function AtsStep({ resumeData, onOptimized, onSkip }) {
   const [jobText, setJobText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null); // { matchScore, keywords, optimizedSummary, tips }
+  const [result, setResult] = useState(null);
 
   const handleAnalyze = async () => {
     if (!jobText.trim()) return;
@@ -30,19 +31,13 @@ function AtsStep({ resumeData, onOptimized, onSkip }) {
     setResult(null);
     try {
       const { base44 } = await import("@/api/base44Client");
-
-      // Lebenslauf als lesbaren Text aufbereiten
       const cvText = [
         resumeData?.name || "",
         resumeData?.title || "",
         resumeData?.summary || "",
-        (resumeData?.experience || []).map(e =>
-          `${e.title || ""} bei ${e.company || ""}: ${e.description || ""}`
-        ).join("\n"),
+        (resumeData?.experience || []).map(e => `${e.title || ""} bei ${e.company || ""}: ${e.description || ""}`).join("\n"),
         (resumeData?.skills || []).join(", "),
-        (resumeData?.education || []).map(e =>
-          `${e.degree || ""} ${e.institution || ""}`
-        ).join(", "),
+        (resumeData?.education || []).map(e => `${e.degree || ""} ${e.institution || ""}`).join(", "),
       ].filter(Boolean).join("\n\n");
 
       const res = await base44.integrations.Core.InvokeLLM({
@@ -54,16 +49,14 @@ ${cvText}
 STELLENANZEIGE:
 ${jobText}
 
-Analysiere die Passung und antworte NUR als JSON mit dieser exakten Struktur:
+Analysiere die Passung und antworte NUR als JSON:
 {
   "matchScore": <Zahl 1-10>,
-  "matchComment": "<1 Satz warum dieser Score>",
-  "missingKeywords": ["keyword1", "keyword2", ...], // max 8, nur wirklich fehlende
-  "optimizedSummary": "<Neu formuliertes Berufsprofil/Summary das vorhandene Erfahrungen des Bewerbers mit Keywords der Stelle verbindet. Max 4 Sätze. Nichts erfinden.>",
-  "tips": ["Tipp 1", "Tipp 2", "Tipp 3"] // 3 konkrete Tipps
-}
-
-Wichtig: Nur vorhandene Infos aus dem Lebenslauf verwenden. Nichts erfinden oder hinzufügen.`,
+  "matchComment": "<1 Satz>",
+  "missingKeywords": ["keyword1", "keyword2"],
+  "optimizedSummary": "<Neu formuliertes Berufsprofil. Max 4 Sätze. Nichts erfinden.>",
+  "tips": ["Tipp 1", "Tipp 2", "Tipp 3"]
+}`,
         response_json_schema: {
           type: "object",
           properties: {
@@ -75,7 +68,6 @@ Wichtig: Nur vorhandene Infos aus dem Lebenslauf verwenden. Nichts erfinden oder
           }
         }
       });
-
       setResult(res);
     } catch (e) {
       setResult({ error: true });
@@ -85,12 +77,7 @@ Wichtig: Nur vorhandene Infos aus dem Lebenslauf verwenden. Nichts erfinden oder
   };
 
   const handleApply = () => {
-    // Nur summary im resumeData ersetzen — alles andere bleibt exakt gleich
-    const updatedData = {
-      ...resumeData,
-      summary: result?.optimizedSummary || resumeData?.summary,
-    };
-    onOptimized(updatedData);
+    onOptimized({ ...resumeData, summary: result?.optimizedSummary || resumeData?.summary });
   };
 
   const scoreColor = (s) => {
@@ -100,162 +87,93 @@ Wichtig: Nur vorhandene Infos aus dem Lebenslauf verwenden. Nichts erfinden oder
   };
 
   return (
-    <motion.div
-      key="ats"
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
-      className="max-w-2xl mx-auto space-y-6"
-    >
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 bg-[#f0f7f2] border border-[#1a3a2a]/20 rounded-full px-4 py-1.5 text-sm text-[#1a3a2a] font-medium">
-          <Sparkles className="w-4 h-4 text-[#c9a84c]" />
-          Bonus-Schritt: ATS-Optimierung
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-[#1a3a2a] flex items-center justify-center flex-shrink-0">
+            <span className="text-[#f5c842] text-lg">🎯</span>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Stellenanzeige abgleichen</h2>
+            <p className="text-gray-500 text-sm">Wir passen dein Profil auf die Stelle an</p>
+          </div>
         </div>
-        <h2 className="text-xl font-bold">Lebenslauf auf Stelle zuschneiden</h2>
-        <p className="text-sm text-muted-foreground">
-          Füge die Stellenanzeige ein — Felix passt dein Berufsprofil an die Anforderungen an.
-          <br />
-          <span className="font-medium text-[#1a3a2a]">Deine Daten bleiben unverändert</span>, nur das Profil wird optimiert.
-        </p>
+        <textarea
+          className="w-full border-2 border-gray-200 focus:border-[#1a3a2a] rounded-xl px-4 py-3 text-sm min-h-[160px] resize-none outline-none transition-colors"
+          placeholder="Stellenanzeige hier einfügen..."
+          value={jobText}
+          onChange={e => setJobText(e.target.value)}
+        />
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={handleAnalyze}
+            disabled={loading || !jobText.trim()}
+            className="flex-1 px-6 py-3 bg-[#1a3a2a] text-white rounded-xl font-semibold hover:bg-[#2d5a3d] transition-colors disabled:opacity-40"
+          >
+            {loading ? "Analysiere…" : "Analysieren →"}
+          </button>
+          <button
+            onClick={onSkip}
+            className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm text-gray-500 hover:bg-gray-50 transition-colors font-medium"
+          >
+            Überspringen
+          </button>
+        </div>
       </div>
 
-      {/* Stellenanzeige Input */}
-      {!result && (
-        <div className="space-y-3">
-          <label className="text-sm font-semibold text-[#1a3a2a]">
-            Stellenanzeige einfügen
-          </label>
-          <textarea
-            className="w-full border border-border rounded-xl p-4 text-sm h-48 resize-none focus:outline-none focus:ring-2 focus:ring-[#1a3a2a]/30 bg-white"
-            placeholder="Kopiere hier die komplette Stellenanzeige rein (Aufgaben, Anforderungen, alles)..."
-            value={jobText}
-            onChange={e => setJobText(e.target.value)}
-            disabled={loading}
-          />
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={handleAnalyze}
-              disabled={!jobText.trim() || loading}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#1a3a2a] text-white font-semibold text-sm hover:bg-[#2d5a3d] disabled:opacity-40 transition-colors"
-            >
-              {loading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Analysiere...</>
-              ) : (
-                <><Sparkles className="w-4 h-4 text-[#c9a84c]" /> Jetzt analysieren</>
-              )}
-            </button>
-            <button
-              onClick={onSkip}
-              className="flex items-center justify-center gap-1 py-3 px-5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            >
-              Überspringen <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Ergebnis */}
       {result && !result.error && (
-        <div className="space-y-4">
-          {/* Match Score */}
-          <div className="bg-white border border-[#1a3a2a]/20 rounded-xl p-4 flex items-center gap-4">
-            <div className="text-center shrink-0">
-              <p className={`text-4xl font-bold ${scoreColor(result.matchScore)}`}>
-                {result.matchScore}<span className="text-lg">/10</span>
-              </p>
-              <p className="text-xs text-muted-foreground">Match-Score</p>
-            </div>
-            <p className="text-sm text-gray-700">{result.matchComment}</p>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <span className={`text-5xl font-black ${scoreColor(result.matchScore)}`}>{result.matchScore}<span className="text-2xl text-gray-400">/10</span></span>
+            <p className="text-sm text-gray-600">{result.matchComment}</p>
           </div>
-
-          {/* Fehlende Keywords */}
           {result.missingKeywords?.length > 0 && (
-            <div className="bg-white border border-border rounded-xl p-4 space-y-2">
-              <p className="text-sm font-semibold text-[#1a3a2a]">🔑 Keywords die noch fehlen</p>
-              <div className="flex flex-wrap gap-2">
-                {result.missingKeywords.map((kw, i) => (
-                  <span key={i} className="text-xs bg-amber-50 border border-amber-200 text-amber-800 px-2.5 py-1 rounded-full">
-                    {kw}
-                  </span>
+            <div>
+              <p className="text-xs font-semibold text-gray-700 mb-2">Fehlende Keywords:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {result.missingKeywords.map(k => (
+                  <span key={k} className="text-xs bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full font-medium">{k}</span>
                 ))}
               </div>
             </div>
           )}
-
-          {/* Optimiertes Profil */}
           {result.optimizedSummary && (
-            <div className="bg-[#f0f7f2] border border-[#1a3a2a]/20 rounded-xl p-4 space-y-2">
-              <p className="text-sm font-semibold text-[#1a3a2a]">✏️ Optimiertes Berufsprofil</p>
-              <p className="text-sm text-gray-700 leading-relaxed">{result.optimizedSummary}</p>
+            <div className="bg-[#f1f5f9] border border-gray-200 rounded-xl p-4">
+              <p className="text-xs font-semibold text-[#1a3a2a] mb-1.5">✨ Optimiertes Berufsprofil:</p>
+              <p className="text-sm text-gray-800 leading-relaxed">{result.optimizedSummary}</p>
             </div>
           )}
-
-          {/* Tipps */}
           {result.tips?.length > 0 && (
-            <div className="bg-white border border-border rounded-xl p-4 space-y-2">
-              <p className="text-sm font-semibold text-[#1a3a2a]">💡 Tipps</p>
+            <div>
+              <p className="text-xs font-semibold text-gray-700 mb-2">Tipps für deine Bewerbung:</p>
               <ul className="space-y-1.5">
                 {result.tips.map((tip, i) => (
-                  <li key={i} className="text-sm text-gray-700 flex gap-2">
-                    <span className="text-[#1a3a2a] font-bold shrink-0">{i + 1}.</span>
-                    {tip}
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                    <span className="text-[#f5c842] font-bold mt-0.5">→</span>
+                    <span>{tip}</span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
-
-          {/* Aktions-Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={handleApply}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#1a3a2a] text-white font-semibold text-sm hover:bg-[#2d5a3d] transition-colors"
-            >
-              ✅ Optimierung übernehmen & weiter
-            </button>
-            <button
-              onClick={onSkip}
-              className="flex items-center justify-center gap-1 py-3 px-5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            >
-              Ohne Änderung weiter
-            </button>
-          </div>
-
           <button
-            onClick={() => setResult(null)}
-            className="w-full text-xs text-muted-foreground hover:text-foreground text-center py-1 transition-colors"
+            onClick={handleApply}
+            className="w-full px-6 py-3 bg-[#1a3a2a] text-white rounded-xl font-semibold hover:bg-[#2d5a3d] transition-colors"
           >
-            ← Andere Stellenanzeige eingeben
+            Optimierung übernehmen →
           </button>
         </div>
       )}
-
       {result?.error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 text-center space-y-3">
-          <p>Analyse fehlgeschlagen. Bitte nochmal versuchen.</p>
-          <div className="flex gap-3 justify-center">
-            <button onClick={() => setResult(null)} className="text-sm underline">Nochmal versuchen</button>
-            <button onClick={onSkip} className="text-sm underline">Überspringen</button>
-          </div>
+        <div className="bg-white rounded-2xl border border-red-200 p-4 text-sm text-red-600 text-center">
+          Analyse fehlgeschlagen. Bitte versuche es erneut.
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
 
-// ─── Haupt-Komponente ─────────────────────────────────────────────────────────
-// ÄNDERUNGEN gegenüber Original:
-// 1. STEPS: "ats" zwischen "select" und "result" eingefügt
-// 2. handleTemplateSelected: geht jetzt zu "ats" statt direkt zu "result"
-// 3. handleAtsOptimized + handleAtsSkip: neue Handler
-// 4. Neuer {step === "ats"} Block im JSX
-// ALLES ANDERE ist 1:1 identisch mit dem Original
-
-const STEPS = ["landing", "photo_intro", "photo_upload", "resume_upload", "confirm_edit", "edit", "select", "ats", "result"];
-
+// ─── Hauptkomponente ──────────────────────────────────────────────────────────
 export default function Home() {
   const [step, setStep] = useState("landing");
   const [resumeData, setResumeData] = useState(null);
@@ -275,7 +193,6 @@ export default function Home() {
 
   const TEST_ACCOUNT = 'info.marc.walter@web.de';
   const isTestAccount = authUser?.email === TEST_ACCOUNT;
-
   const currentUser = authUser ? {
     username: authUser.email,
     unlimited: !isTestAccount && authUser.role === "admin",
@@ -283,7 +200,6 @@ export default function Home() {
     isTestAccount,
   } : null;
 
-  // ── Handler (unverändert) ──
   const handlePhotoChoice = (choice) => {
     if (choice === "has_photo") { setStartWithCamera(false); setStep("photo_upload"); }
     else if (choice === "take_photo") { setStartWithCamera(true); setStep("photo_upload"); }
@@ -301,7 +217,7 @@ export default function Home() {
       try {
         const { base44 } = await import("@/api/base44Client");
         const res = await base44.integrations.Core.InvokeLLM({
-          prompt: `Based on the name "${data.name}", determine the likely gender. Respond with exactly one word: "male", "female", or "undetermined". Consider international names. Respond only with the single word.`,
+          prompt: `Based on the name "${data.name}", determine the likely gender. Respond with exactly one word: "male", "female", or "undetermined".`,
           response_json_schema: { type: "object", properties: { gender: { type: "string" } } }
         });
         const detectedGender = res?.gender?.toLowerCase();
@@ -312,9 +228,8 @@ export default function Home() {
     setStep("confirm_edit");
   };
 
-  const handleEditConfirmed = (editedData) => { setResumeData(editedData); setStep("select"); };
-  const handleSkipEdit = () => { setShowGenderPrompt(false); setStep("select"); };
-  const handleBackToEdit = () => { setStep("edit"); setFinalResult(null); };
+  const handleEditConfirmed = (editedData) => { setResumeData(editedData); setStep("ats"); };
+  const handleAtsOptimized = (data) => { setResumeData(data); setStep("select"); };
   const handleFinished = (result) => { setFinalResult(result); setStep("result"); };
   const handleReset = () => {
     setStep("landing"); setResumeData(null); setPhoto(null); setFinalResult(null);
@@ -322,34 +237,18 @@ export default function Home() {
   };
   const handleGenderSelected = (g) => { setGender(g); setShowGenderPrompt(false); setStep("edit"); };
 
-  // ── NEU: ATS Handler ──
-  // Wird aufgerufen wenn TemplateSelector "fertig" meldet → geht zu ATS statt direkt zu result
-  // handleFinished bleibt unverändert — wird von FinalResult aufgerufen
-  const handleAtsOptimized = (optimizedData) => {
-    // Übernimmt das optimierte resumeData und geht zu result
-    setResumeData(optimizedData);
-    setStep("result");
-  };
-  const handleAtsSkip = () => {
-    // Geht ohne Änderung zu result
-    setStep("result");
-  };
-
   const currentStepIndex = STEPS.indexOf(step);
 
   if (!isAuthenticated) {
     return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center bg-background gap-6">
-        <div className="text-center space-y-1">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="text-2xl">📄</span>
-            <span className="text-xl font-bold tracking-tight">Lebenslauf-Optimierer</span>
-          </div>
-          <p className="text-sm text-muted-foreground">Dein Lebenslauf. Professionell. In Sekunden.</p>
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#f1f5f9] gap-6">
+        <div className="bg-[#111] rounded-2xl px-8 py-6 inline-block mb-2">
+          <JobfertigLogo />
         </div>
         <div className="text-center space-y-4">
-          <p className="text-muted-foreground text-sm">Bitte melde dich an, um fortzufahren.</p>
-          <button onClick={navigateToLogin} className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition-colors">
+          <p className="text-gray-500 text-sm">Bitte melde dich an, um fortzufahren.</p>
+          <button onClick={navigateToLogin}
+            className="px-6 py-3 bg-[#1a3a2a] text-white font-semibold rounded-xl hover:bg-[#2d5a3d] transition-colors shadow-sm">
             Anmelden
           </button>
         </div>
@@ -358,25 +257,36 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Navbar — unverändert */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-border shadow-sm">
+    <div className="min-h-screen bg-[#f1f5f9]">
+      {/* ── Navbar ── */}
+      <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+          {/* Links: Logo + Titel */}
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mr-1">
-              <span>←</span>
+            <Link to="/" className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors mr-1">
+              <ArrowLeft className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Startseite</span>
             </Link>
-            <div className="flex flex-col leading-tight">
-              <span className="font-bold text-sm tracking-tight">Lebenslauf-Optimierer</span>
-              <span className="text-[10px] text-muted-foreground hidden sm:block">Dein Lebenslauf. Professionell. In Sekunden.</span>
+            {/* Icon + Name */}
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-[#1a3a2a] flex items-center justify-center flex-shrink-0">
+                <FileText className="w-3.5 h-3.5 text-[#f5c842]" />
+              </div>
+              <div className="flex flex-col leading-tight">
+                <span className="font-bold text-sm text-gray-900 tracking-tight">Lebenslauf-Optimierer</span>
+                <span className="text-[10px] text-gray-400 hidden sm:block">Professionell. In Sekunden.</span>
+              </div>
             </div>
-            <button onClick={() => setLang(l => l === "de" ? "en" : "de")}
-              className="ml-2 px-2 py-0.5 rounded-md border border-border text-xs text-muted-foreground hover:bg-secondary transition-all">
+            {/* Sprache */}
+            <button
+              onClick={() => setLang(l => l === "de" ? "en" : "de")}
+              className="ml-2 px-2 py-0.5 rounded-md border border-gray-200 text-xs text-gray-400 hover:bg-gray-50 transition-all"
+            >
               {lang === "de" ? "EN" : "DE"}
             </button>
           </div>
 
+          {/* Mitte: Schritt-Indikatoren */}
           <div className="hidden sm:flex items-center gap-1 text-xs">
             {[
               { id: "photo_intro", label: t.nav.step1 },
@@ -385,23 +295,31 @@ export default function Home() {
               { id: "result", label: t.nav.step4 }
             ].map((s, i, arr) => {
               const sIdx = STEPS.indexOf(s.id);
-              const isActive = step === s.id || (s.id === "edit" && (step === "confirm_edit" || step === "select")) || (s.id === "result" && step === "ats");
-              const isPast = currentStepIndex > sIdx && step !== "ats";
+              const isActive = step === s.id || (s.id === "edit" && ["confirm_edit", "ats", "select"].includes(step));
+              const isPast = currentStepIndex > sIdx;
               return (
                 <div key={s.id} className="flex items-center gap-1">
-                  <span className={`px-2 py-1 rounded-md text-xs transition-all ${isActive ? "font-semibold text-foreground" : isPast ? "text-muted-foreground" : "text-muted-foreground/40"}`}>
+                  <span className={`px-2 py-1 rounded-md text-xs transition-all ${
+                    isActive ? "font-semibold text-[#1a3a2a] bg-[#1a3a2a]/8"
+                    : isPast ? "text-gray-400"
+                    : "text-gray-300"
+                  }`}>
                     {s.label}
                   </span>
-                  {i < arr.length - 1 && <span className="text-border">›</span>}
+                  {i < arr.length - 1 && <span className="text-gray-200">›</span>}
                 </div>
               );
             })}
           </div>
 
+          {/* Rechts: User + Logout */}
           {authUser && (
             <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground hidden md:block">{authUser.email}</span>
-              <button onClick={logout} className="text-xs text-muted-foreground hover:text-foreground border border-border px-3 py-1 rounded-lg transition-colors">
+              <span className="text-xs text-gray-400 hidden md:block">{authUser.email}</span>
+              <button
+                onClick={logout}
+                className="text-xs text-gray-500 hover:text-gray-800 border border-gray-200 px-3 py-1 rounded-lg transition-colors"
+              >
                 Abmelden
               </button>
             </div>
@@ -409,26 +327,34 @@ export default function Home() {
         </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      {/* ── Content ── */}
+      <div className="max-w-6xl mx-auto px-6 py-10">
         <AnimatePresence mode="wait">
 
-          {/* ── ALLE ORIGINAL-STEPS unverändert ── */}
-
+          {/* Landing */}
           {step === "landing" && (
-            <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <div className="text-center max-w-2xl mx-auto py-16 space-y-8">
-                <div className="space-y-3">
-                  <h1 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight">{t.hero.title}</h1>
-                  <p className="text-base md:text-lg text-muted-foreground">{t.hero.subtitle}</p>
-                </div>
-                <div className="flex flex-col items-center gap-3">
-                  <button onClick={() => setStep("photo_intro")}
-                    className="px-10 py-4 bg-primary text-primary-foreground font-semibold text-base rounded-xl hover:bg-primary/90 transition-colors shadow-md">
+            <motion.div key="landing" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <div className="max-w-md mx-auto pt-8">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center space-y-6">
+                  <div className="w-16 h-16 rounded-2xl bg-[#1a3a2a] flex items-center justify-center mx-auto">
+                    <FileText className="w-8 h-8 text-[#f5c842]" />
+                  </div>
+                  <div className="space-y-2">
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t.hero.title}</h1>
+                    <p className="text-gray-500 text-sm leading-relaxed">{t.hero.subtitle}</p>
+                  </div>
+                  <button
+                    onClick={() => setStep("photo_intro")}
+                    className="w-full px-6 py-4 bg-[#1a3a2a] text-white font-semibold text-base rounded-xl hover:bg-[#2d5a3d] transition-colors shadow-sm"
+                  >
                     {lang === "de" ? "Jetzt starten →" : "Get started →"}
                   </button>
-                  <div className="flex gap-2">
-                    <button onClick={() => setShowDsgvo(true)} className="px-4 py-2 border border-border text-xs text-muted-foreground rounded-lg hover:bg-secondary transition-colors">DSGVO</button>
-                    <button onClick={() => setShowAgb(true)} className="px-4 py-2 border border-border text-xs text-muted-foreground rounded-lg hover:bg-secondary transition-colors">AGB</button>
+                  <div className="flex justify-center gap-3">
+                    <button onClick={() => setShowDsgvo(true)} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">DSGVO</button>
+                    <span className="text-gray-200">·</span>
+                    <button onClick={() => setShowAgb(true)} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">AGB</button>
+                    <span className="text-gray-200">·</span>
+                    <button onClick={() => setShowImpressum(true)} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">Impressum</button>
                   </div>
                 </div>
               </div>
@@ -436,105 +362,102 @@ export default function Home() {
           )}
 
           {step === "photo_intro" && (
-            <motion.div key="photo_intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <button onClick={() => setStep("landing")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+            <motion.div key="photo_intro" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <button onClick={() => setStep("landing")} className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-700 mb-6 transition-colors">
                 <ArrowLeft className="w-4 h-4" /> Zurück
               </button>
-              <PhotoIntro onChoice={handlePhotoChoice} t={t.photoIntro} />
+              <PhotoIntro onChoice={handlePhotoChoice} lang={lang} />
             </motion.div>
           )}
 
           {step === "photo_upload" && (
-            <motion.div key="photo_upload" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-md mx-auto space-y-6">
-              <button onClick={() => setStep("photo_intro")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+            <motion.div key="photo_upload" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <button onClick={() => setStep("photo_intro")} className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-700 mb-6 transition-colors">
                 <ArrowLeft className="w-4 h-4" /> Zurück
               </button>
-              <div className="text-center space-y-2">
-                <h2 className="font-semibold text-xl">{t.photo?.title || "Foto hochladen"}</h2>
-              </div>
-              <PhotoUploader onPhotoReady={handlePhotoReady} t={t.photo} startWithCamera={startWithCamera} />
+              <PhotoUploader
+                startWithCamera={startWithCamera}
+                onPhotoReady={handlePhotoReady}
+                onSkip={() => { setPhoto(null); photoRef.current = null; setStep("resume_upload"); }}
+                lang={lang}
+              />
             </motion.div>
           )}
 
           {step === "resume_upload" && (
-            <motion.div key="resume_upload" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-lg mx-auto space-y-6">
-              <button onClick={() => setStep("photo_intro")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+            <motion.div key="resume_upload" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <button onClick={() => setStep("photo_intro")} className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-700 mb-6 transition-colors">
                 <ArrowLeft className="w-4 h-4" /> Zurück
               </button>
-              <div className="text-center space-y-2">
-                <h2 className="font-semibold text-xl">{t.upload?.title || "Lebenslauf hochladen"}</h2>
-                <p className="text-sm text-muted-foreground">{t.upload?.subtitle || "PDF oder Word-Datei"}</p>
-              </div>
               <ResumeUploader
-                onDataExtracted={handleDataExtracted}
-                isExtracting={isExtracting}
-                setIsExtracting={setIsExtracting}
-                t={t.upload}
+                photo={photo}
+                onExtracted={handleDataExtracted}
+                onExtracting={setIsExtracting}
+                lang={lang}
               />
             </motion.div>
           )}
 
           {step === "confirm_edit" && (
-            <motion.div key="confirm_edit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-lg mx-auto">
+            <motion.div key="confirm_edit" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <ConfirmEdit
-                resumeData={resumeData}
-                onConfirm={() => setStep("edit")}
-                onSkip={handleSkipEdit}
-                t={t.confirmEdit}
+                data={resumeData}
+                onConfirm={handleEditConfirmed}
+                onSkip={() => setStep("ats")}
+                lang={lang}
               />
             </motion.div>
           )}
 
           {step === "edit" && (
-            <motion.div key="edit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div key="edit" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               {showGenderPrompt && (
-                <GenderSelector onSelect={handleGenderSelected} />
+                <GenderSelector
+                  onSelect={handleGenderSelected}
+                  onSkip={() => { setShowGenderPrompt(false); setStep("ats"); }}
+                />
               )}
               <EditResumeForm
-                data={resumeData}
-                photo={photo}
-                onConfirmed={handleEditConfirmed}
-                t={t.edit}
+                initialData={resumeData}
+                onSave={(data) => { setResumeData(data); setStep("ats"); }}
+                onBack={() => setStep("confirm_edit")}
+                lang={lang}
+              />
+            </motion.div>
+          )}
+
+          {step === "ats" && (
+            <motion.div key="ats" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <AtsStep
+                resumeData={resumeData}
+                onOptimized={handleAtsOptimized}
+                onSkip={() => setStep("select")}
               />
             </motion.div>
           )}
 
           {step === "select" && (
-            <motion.div key="select" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div key="select" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <TemplateSelector
-                resumeData={resumeData}
+                data={resumeData}
                 photo={photo}
                 gender={gender}
-                // NEU: geht zu "ats" statt direkt zu "result"
-                onFinished={(result) => {
-                  setFinalResult(result);
-                  setStep("ats");
-                }}
-                t={t.select}
-                currentUser={currentUser}
+                user={currentUser}
+                lang={lang}
+                onFinished={handleFinished}
+                onBack={() => setStep("edit")}
               />
             </motion.div>
           )}
 
-          {/* ── NEU: ATS Step ── */}
-          {step === "ats" && (
-            <AtsStep
-              resumeData={resumeData}
-              onOptimized={handleAtsOptimized}
-              onSkip={handleAtsSkip}
-            />
-          )}
-
           {step === "result" && (
-            <motion.div key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <FinalResult
-                resumeData={resumeData}
-                photo={photo}
                 result={finalResult}
+                user={currentUser}
+                lang={lang}
+                onBack={() => setStep("edit")}
                 onReset={handleReset}
-                onEdit={handleBackToEdit}
-                t={t.result}
-                currentUser={currentUser}
               />
             </motion.div>
           )}
@@ -542,7 +465,19 @@ export default function Home() {
         </AnimatePresence>
       </div>
 
-      {/* Modals — unverändert */}
+      {/* ── Footer ── */}
+      <footer className="mt-12 pb-8">
+        <div className="max-w-5xl mx-auto px-6 flex justify-center gap-4 text-xs text-gray-400">
+          <button onClick={() => setShowImpressum(true)} className="hover:text-gray-600 transition-colors">Impressum</button>
+          <span>·</span>
+          <button onClick={() => setShowAgb(true)} className="hover:text-gray-600 transition-colors">AGB</button>
+          <span>·</span>
+          <button onClick={() => setShowDsgvo(true)} className="hover:text-gray-600 transition-colors">Datenschutz</button>
+        </div>
+        <p className="text-center text-xs text-gray-300 mt-2">© 2026 JobFertig.de · M Corp Apps</p>
+      </footer>
+
+      {/* Modals */}
       {showDsgvo && <DsgvoModal onClose={() => setShowDsgvo(false)} />}
       {showAgb && <AgbModal onClose={() => setShowAgb(false)} />}
       {showImpressum && <ImpressumModal onClose={() => setShowImpressum(false)} />}
