@@ -5,6 +5,8 @@ import { Loader2, Upload, FileText, ArrowLeft, ArrowRight, CheckCircle, AlertTri
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
+const lcFirst = (s) => s ? s.charAt(0).toLowerCase() + s.slice(1) : s;
+
 export default function StepResumeUpload({ jobData, onBack, onNext }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -168,7 +170,7 @@ Gib NUR den reinen Text zurück, ohne JSON-Wrapper.`,
         match_score: matchResult.match_score,
         is_initiative: isInitiativeFlag,
         subject: matchResult.subject,
-        body: bodyResult?.body || "",
+        body: lcFirst(bodyResult?.body || ""),
       };
 
       const applicantName = resumeData.name || `${resumeData.firstName || ""} ${resumeData.lastName || ""}`.trim();
