@@ -87,7 +87,7 @@ Analysiere die Passung und antworte NUR als JSON:
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div dir={lang === "ar" ? "rtl" : "ltr"} className="max-w-2xl mx-auto space-y-6">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-[#1a3a2a] flex items-center justify-center flex-shrink-0">
@@ -278,12 +278,20 @@ export default function Home() {
               </div>
             </div>
             {/* Sprache */}
-            <button
-              onClick={() => setLang(l => l === "de" ? "en" : "de")}
-              className="ml-2 px-2 py-0.5 rounded-md border border-gray-200 text-xs text-gray-400 hover:bg-gray-50 transition-all"
-            >
-              {lang === "de" ? "EN" : "DE"}
-            </button>
+            <div className="ml-2 relative">
+              <select
+                value={lang}
+                onChange={e => setLang(e.target.value)}
+                dir="ltr"
+                className="px-2 py-0.5 rounded-md border border-gray-200 text-xs text-gray-500 hover:bg-gray-50 transition-all bg-white cursor-pointer appearance-none pr-5"
+                style={{ backgroundImage: "url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239ca3af'/%3E%3C/svg%3E")", backgroundRepeat: "no-repeat", backgroundPosition: "right 4px center" }}
+              >
+                <option value="de">🇩🇪 DE</option>
+                <option value="en">🇬🇧 EN</option>
+                <option value="uk">🇺🇦 UK</option>
+                <option value="ar">🇸🇦 AR</option>
+              </select>
+            </div>
           </div>
 
           {/* Mitte: Schritt-Indikatoren */}
@@ -347,7 +355,7 @@ export default function Home() {
                     onClick={() => setStep("photo_intro")}
                     className="w-full px-6 py-4 bg-[#1a3a2a] text-white font-semibold text-base rounded-xl hover:bg-[#2d5a3d] transition-colors shadow-sm"
                   >
-                    {lang === "de" ? "Jetzt starten →" : "Get started →"}
+                    {t.startBtn}
                   </button>
                   <div className="flex justify-center gap-3">
                     <button onClick={() => setShowDsgvo(true)} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">DSGVO</button>
@@ -484,3 +492,4 @@ export default function Home() {
     </div>
   );
 }
+
