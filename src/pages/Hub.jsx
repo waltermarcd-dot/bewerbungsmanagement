@@ -1,24 +1,58 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { FileText, PenLine, ChevronRight, Star, Shield, Zap, LayoutDashboard } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FileText, PenLine, ChevronRight, Star, Shield, Zap, LayoutDashboard, Globe, HelpCircle, Trash2, AlertTriangle } from "lucide-react";
 import ImpressumModal from "../components/ImpressumModal";
 import AgbModal from "../components/AgbModal";
 import DsgvoModal from "../components/DsgvoModal";
 import AppNavbar from "../components/AppNavbar";
 import { useAuth } from "@/lib/AuthContext";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
+
+const LANGS = [
+  { code: "de", label: "🇩🇪 DE" },
+  { code: "en", label: "🇬🇧 EN" },
+  { code: "uk", label: "🇺🇦 UK" },
+  { code: "ar", label: "🇸🇦 AR" },
+];
 
 export default function Hub() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [lang, setLang] = useState("de");
   const [showImpressum, setShowImpressum] = useState(false);
   const [showAgb, setShowAgb] = useState(false);
   const [showDsgvo, setShowDsgvo] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      // Alle Daten des Users löschen
+      const savedLV = await base44.entities.SavedLebenslauf.filter({ user_email: user?.email });
+      for (const r of savedLV) await base44.entities.SavedLebenslauf.delete(r.id);
+
+      const savedAS = await base44.entities.SavedAnschreiben.filter({ user_email: user?.email });
+      for (const r of savedAS) await base44.entities.SavedAnschreiben.delete(r.id);
+
+      const bew = await base44.entities.Bewerbung.filter({ user_email: user?.email });
+      for (const r of bew) await base44.entities.Bewerbung.delete(r.id);
+
+      toast.success("Alle deine Daten wurden gelöscht.");
+      setShowDeleteConfirm(false);
+      await logout();
+    } catch (e) {
+      toast.error("Fehler beim Löschen: " + e.message);
+    }
+    setDeleting(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] font-inter flex flex-col">
 
-      {/* ── Einheitliche Navbar ── */}
+      {/* Navbar */}
       <AppNavbar
         title="JobFertig"
         subtitle="Deine Bewerbung. Professionell. In Minuten."
@@ -26,6 +60,8 @@ export default function Hub() {
         showBack={false}
         user={user}
         logout={logout}
+        lang={lang}
+        setLang={setLang}
       />
 
       {/* Hero */}
@@ -61,9 +97,7 @@ export default function Hub() {
               </div>
               <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-[#1a3a2a] group-hover:translate-x-1 transition-all" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
-              Lebenslauf verbessern
-            </h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Lebenslauf verbessern</h2>
             <p className="text-sm text-gray-500 mb-6 leading-relaxed">
               Lade deinen vorhandenen Lebenslauf hoch — wir optimieren ihn und erstellen ein professionelles PDF.
             </p>
@@ -73,9 +107,6 @@ export default function Hub() {
               </span>
               <span className="inline-flex items-center gap-1 text-xs bg-[#c9a84c]/10 text-[#8a6d2f] px-2.5 py-1 rounded-full font-medium">
                 3 Design-Templates
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">
-                PDF-Download
               </span>
             </div>
             <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
@@ -98,9 +129,7 @@ export default function Hub() {
               </div>
               <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-[#1a3a2a] group-hover:translate-x-1 transition-all" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
-              Anschreiben erstellen
-            </h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Anschreiben erstellen</h2>
             <p className="text-sm text-gray-500 mb-6 leading-relaxed">
               Gib die Stellenanzeige ein und lade deinen Lebenslauf hoch — wir erstellen ein maßgeschneidertes Anschreiben.
             </p>
@@ -111,9 +140,6 @@ export default function Hub() {
               <span className="inline-flex items-center gap-1 text-xs bg-[#c9a84c]/10 text-[#8a6d2f] px-2.5 py-1 rounded-full font-medium">
                 Auf Stelle zugeschnitten
               </span>
-              <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">
-                PDF / Word
-              </span>
             </div>
             <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
               <span className="text-sm font-semibold text-gray-900">10,00 €</span>
@@ -122,25 +148,41 @@ export default function Hub() {
           </motion.button>
         </div>
 
+        {/* Quick-Links: FAQ + Account löschen */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="flex flex-wrap justify-center gap-4 mt-8"
+        >
+          <button
+            onClick={() => navigate("/faq")}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm text-gray-600 hover:text-[#1a3a2a] hover:border-[#1a3a2a]/30 shadow-sm transition-all"
+          >
+            <HelpCircle className="w-4 h-4" />
+            Hilfe & FAQ
+          </button>
+          {user && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm text-gray-400 hover:text-red-500 hover:border-red-200 shadow-sm transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+              Account löschen
+            </button>
+          )}
+        </motion.div>
+
         {/* Vertrauens-Badges */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="flex flex-wrap justify-center gap-6 mt-12 text-xs text-gray-400"
+          className="flex flex-wrap justify-center gap-6 mt-8 text-xs text-gray-400"
         >
-          <div className="flex items-center gap-1.5">
-            <Shield className="w-4 h-4 text-[#1a3a2a]/50" />
-            <span>DSGVO-konform</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Star className="w-4 h-4 text-[#c9a84c]/70" />
-            <span>Entwickelt in Deutschland</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Zap className="w-4 h-4 text-[#1a3a2a]/50" />
-            <span>KI nach EU AI Act</span>
-          </div>
+          <div className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-[#1a3a2a]/50" /><span>DSGVO-konform</span></div>
+          <div className="flex items-center gap-1.5"><Star className="w-4 h-4 text-[#c9a84c]/70" /><span>Entwickelt in Deutschland</span></div>
+          <div className="flex items-center gap-1.5"><Zap className="w-4 h-4 text-[#1a3a2a]/50" /><span>KI nach EU AI Act</span></div>
         </motion.div>
       </main>
 
@@ -157,9 +199,56 @@ export default function Hub() {
         </div>
       </footer>
 
+      {/* Modals */}
       {showImpressum && <ImpressumModal onClose={() => setShowImpressum(false)} />}
       {showAgb && <AgbModal onClose={() => setShowAgb(false)} />}
       {showDsgvo && <DsgvoModal onClose={() => setShowDsgvo(false)} />}
+
+      {/* Account löschen Bestätigung */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
+            onClick={() => setShowDeleteConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl"
+            >
+              <div className="flex justify-center mb-4">
+                <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
+                  <AlertTriangle className="w-7 h-7 text-red-500" />
+                </div>
+              </div>
+              <h3 className="text-lg font-bold text-center text-gray-900 mb-2">Account wirklich löschen?</h3>
+              <p className="text-sm text-gray-500 text-center mb-6">
+                Alle deine gespeicherten Lebensläufe, Anschreiben und Bewerbungsdaten werden unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
+              </p>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleting}
+                  className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors disabled:opacity-60"
+                >
+                  {deleting ? "Wird gelöscht…" : "Ja, Account & Daten löschen"}
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
