@@ -70,19 +70,21 @@ function buildDin5008Html(cl, bodyText, today) {
 
   .clearfix::after { content: ""; display: table; clear: both; }
 
-  /* Datum: rechtsbündig, nach Anschriftfeld */
+  /* Datum: Teil des Info-Blocks rechts oben (DIN 5008 Form B) */
   .date-line {
     text-align: right;
     font-size: 11pt;
-    margin-top: 8.46mm; /* 2 Leerzeilen */
-    margin-bottom: 8.46mm;
+    margin-top: 4mm;
+    font-weight: normal;
   }
 
-  /* Betreff: fett, 2 Leerzeilen vor und nach */
+  /* Betreff: fett, klar nach dem Adressblock */
   .subject-line {
     font-size: 11pt;
     font-weight: bold;
+    margin-top: 8.46mm;
     margin-bottom: 8.46mm;
+    clear: both;
   }
 
   /* Anrede */
@@ -135,11 +137,10 @@ function buildDin5008Html(cl, bodyText, today) {
       <div>${esc(cl.applicantZipCity)}</div>
       <div>${esc(cl.applicantPhone)}</div>
       <div>${esc(cl.applicantEmail)}</div>
+      <div class="date-line">${today}</div>
     </div>
   </div>
-
-  <!-- Datum -->
-  <div class="date-line">${today}</div>
+  <div style="clear:both;"></div>
 
   <!-- Betreff -->
   <div class="subject-line">${esc(cl.subject || `Bewerbung als ${cl.jobTitle}`)}</div>
