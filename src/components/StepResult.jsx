@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { base44 } from "@/api/base44Client";
-import { ArrowLeft, Download, Copy, RefreshCw, FileText, FileDown, Loader2, Check, Pencil } from "lucide-react";
+import { ArrowLeft, Download, Copy, RefreshCw, FileText, FileDown, Loader2, Check, Pencil, Mail } from "lucide-react";
 import VoucherInput from "./VoucherInput";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -292,6 +292,13 @@ export default function StepResult({ coverLetter, jobData, user, onBack, onResta
     setExporting(null);
   };
 
+
+  const handleSendEmail = () => {
+    const subject = encodeURIComponent(cl.subject || `Bewerbung als ${cl.jobTitle}`);
+    const body = encodeURIComponent(fullText());
+    window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
+  };
+
   const handleDownloadPdf = async () => {
     if (!canDownload) {
       toast.error("Bitte löse zuerst einen Gutscheincode ein.");
@@ -514,6 +521,10 @@ export default function StepResult({ coverLetter, jobData, user, onBack, onResta
           <Button variant="outline" onClick={handleCopy} className="gap-2">
             {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
             Kopieren
+          </Button>
+          <Button variant="outline" onClick={handleSendEmail} className="gap-2">
+            <Mail className="w-4 h-4" />
+            Per E-Mail senden
           </Button>
         </div>
         <div className="flex gap-2 flex-wrap">
