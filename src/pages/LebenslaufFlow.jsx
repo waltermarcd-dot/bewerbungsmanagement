@@ -257,24 +257,24 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9]">
+    <div className="min-h-screen bg-[#f1f5f9] font-inter">
       {/* ── Navbar ── */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+      <nav className="sticky top-0 z-50 bg-[#1a3a2a] border-b border-[#2d5a3d] shadow-md">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           {/* Links: Logo + Titel */}
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors mr-1">
+            <Link to="/" className="flex items-center gap-1.5 text-xs text-[#c9a84c]/80 hover:text-[#c9a84c] transition-colors mr-1">
               <ArrowLeft className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Startseite</span>
             </Link>
             {/* Icon + Name */}
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-[#1a3a2a] flex items-center justify-center flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center flex-shrink-0">
                 <FileText className="w-3.5 h-3.5 text-[#f5c842]" />
               </div>
               <div className="flex flex-col leading-tight">
-                <span className="font-bold text-sm text-gray-900 tracking-tight">Lebenslauf-Optimierer</span>
-                <span className="text-[10px] text-gray-400 hidden sm:block">Professionell. In Sekunden.</span>
+                <span className="font-bold text-sm text-white tracking-tight">Lebenslauf-Optimierer</span>
+                <span className="text-[10px] text-[#c9a84c]/80 hidden sm:block">Professionell. In Sekunden.</span>
               </div>
             </div>
             {/* Sprache */}
@@ -283,7 +283,7 @@ export default function Home() {
                 value={lang}
                 onChange={e => setLang(e.target.value)}
                 dir="ltr"
-                className="px-2 py-0.5 rounded-md border border-gray-200 text-xs text-gray-500 hover:bg-gray-50 transition-all bg-white cursor-pointer appearance-none pr-5"
+                className="px-2 py-0.5 rounded-md border border-white/30 text-xs text-white bg-white/10 hover:bg-white/20 transition-all cursor-pointer appearance-none pr-5"
                 style={{ backgroundImage: "url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239ca3af'/%3E%3C/svg%3E")", backgroundRepeat: "no-repeat", backgroundPosition: "right 4px center" }}
               >
                 <option value="de">🇩🇪 DE</option>
@@ -308,13 +308,13 @@ export default function Home() {
               return (
                 <div key={s.id} className="flex items-center gap-1">
                   <span className={`px-2 py-1 rounded-md text-xs transition-all ${
-                    isActive ? "font-semibold text-[#1a3a2a] bg-[#1a3a2a]/8"
-                    : isPast ? "text-gray-400"
-                    : "text-gray-300"
+                    isActive ? "font-semibold text-[#1a3a2a] bg-[#c9a84c]"
+                    : isPast ? "text-[#c9a84c]/60"
+                    : "text-white/30"
                   }`}>
                     {s.label}
                   </span>
-                  {i < arr.length - 1 && <span className="text-gray-200">›</span>}
+                  {i < arr.length - 1 && <span className="text-white/30">›</span>}
                 </div>
               );
             })}
@@ -323,10 +323,10 @@ export default function Home() {
           {/* Rechts: User + Logout */}
           {authUser && (
             <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400 hidden md:block">{authUser.email}</span>
+              <span className="text-xs text-white/60 hidden md:block">{authUser.email}</span>
               <button
                 onClick={logout}
-                className="text-xs text-gray-500 hover:text-gray-800 border border-gray-200 px-3 py-1 rounded-lg transition-colors"
+                className="text-xs text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-1 rounded-lg transition-colors"
               >
                 Abmelden
               </button>
@@ -492,4 +492,5 @@ export default function Home() {
     </div>
   );
 }
+
 
