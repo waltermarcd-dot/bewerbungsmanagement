@@ -13,7 +13,7 @@ export default function Hub() {
   const [showDsgvo, setShowDsgvo] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background font-display flex flex-col">
+    <div className="min-h-screen bg-background font-inter flex flex-col">
 
       {/* Header */}
       <header className="border-b border-border bg-white shadow-sm">
@@ -169,3 +169,4 @@ export default function Hub() {
     </div>
   );
 }
+
