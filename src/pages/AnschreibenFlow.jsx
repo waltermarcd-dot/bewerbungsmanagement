@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { translations } from "@/lib/translations";
 import { useAuth } from "@/lib/AuthContext";
 import StepJobInput from "@/components/anschreiben/StepJobInput";
 import StepResumeUpload from "@/components/anschreiben/StepResumeUpload";
@@ -19,6 +20,8 @@ const STEPS = [
 
 export default function Generator() {
   const { user, logout, isAuthenticated, navigateToLogin } = useAuth();
+  const [lang, setLang] = useState("de");
+  const t = translations[lang];
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [jobData, setJobData] = useState(null);
@@ -46,7 +49,7 @@ export default function Generator() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9]">
+    <div dir={lang === "ar" ? "rtl" : "ltr"} className="min-h-screen bg-[#f1f5f9]">
 
       {/* ── Navbar ── */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -66,6 +69,21 @@ export default function Generator() {
                 <span className="font-bold text-sm text-gray-900 tracking-tight">Anschreiben-Generator</span>
                 <span className="text-[10px] text-gray-400 hidden sm:block">Überzeugend. In Minuten.</span>
               </div>
+            </div>
+            {/* Sprache */}
+            <div className="ml-2 relative">
+              <select
+                value={lang}
+                onChange={e => setLang(e.target.value)}
+                dir="ltr"
+                className="px-2 py-0.5 rounded-md border border-gray-200 text-xs text-gray-500 hover:bg-gray-50 transition-all bg-white cursor-pointer appearance-none pr-5"
+                style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239ca3af'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 4px center" }}
+              >
+                <option value="de">🇩🇪 DE</option>
+                <option value="en">🇬🇧 EN</option>
+                <option value="uk">🇺🇦 UK</option>
+                <option value="ar">🇸🇦 AR</option>
+              </select>
             </div>
           </div>
 
@@ -192,3 +210,4 @@ export default function Generator() {
     </div>
   );
 }
+
