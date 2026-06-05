@@ -9,6 +9,7 @@ import Hub from './pages/Hub';
 import LebenslaufFlow from './pages/LebenslaufFlow';
 import AnschreibenFlow from './pages/AnschreibenFlow';
 import AdminVouchers from './pages/AdminVouchers';
+import Faq from './pages/Faq';
 
 const AuthenticatedApp = () => {
   const { isLoadingPublicSettings } = useAuth();
@@ -30,6 +31,7 @@ const AuthenticatedApp = () => {
       <Route path="/lebenslauf" element={<LebenslaufFlow />} />
       <Route path="/anschreiben" element={<AnschreibenFlow />} />
       <Route path="/admin/vouchers" element={<AdminVouchers />} />
+      <Route path="/faq" element={<Faq />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
