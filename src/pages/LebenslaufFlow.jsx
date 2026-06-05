@@ -15,6 +15,7 @@ import ImpressumModal from "@/components/lebenslauf/ImpressumModal";
 import { useAuth } from "@/lib/AuthContext";
 import { Link } from "react-router-dom";
 import { ArrowLeft, FileText } from "lucide-react";
+import AppNavbar from "@/components/AppNavbar";
 import JobfertigLogo from "@/components/JobfertigLogo";
 
 const STEPS = ["landing", "photo_intro", "photo_upload", "resume_upload", "confirm_edit", "edit", "ats", "select", "result"];
@@ -259,81 +260,28 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#f1f5f9] font-inter">
       {/* ── Navbar ── */}
-      <nav className="sticky top-0 z-50 bg-[#1a3a2a] border-b border-[#2d5a3d] shadow-md">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          {/* Links: Logo + Titel */}
-          <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-1.5 text-xs text-[#c9a84c]/80 hover:text-[#c9a84c] transition-colors mr-1">
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Startseite</span>
-            </Link>
-            {/* Icon + Name */}
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center flex-shrink-0">
-                <FileText className="w-3.5 h-3.5 text-[#f5c842]" />
-              </div>
-              <div className="flex flex-col leading-tight">
-                <span className="font-bold text-sm text-white tracking-tight">Lebenslauf-Optimierer</span>
-                <span className="text-[10px] text-[#c9a84c]/80 hidden sm:block">Professionell. In Sekunden.</span>
-              </div>
-            </div>
-            {/* Sprache */}
-            <div className="ml-2 relative">
-              <select
-                value={lang}
-                onChange={e => setLang(e.target.value)}
-                dir="ltr"
-                className="px-2 py-0.5 rounded-md border border-white/30 text-xs text-white bg-white/10 hover:bg-white/20 transition-all cursor-pointer appearance-none pr-5"
-                style={{ backgroundImage: "url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239ca3af'/%3E%3C/svg%3E")", backgroundRepeat: "no-repeat", backgroundPosition: "right 4px center" }}
-              >
-                <option value="de">🇩🇪 DE</option>
-                <option value="en">🇬🇧 EN</option>
-                <option value="uk">🇺🇦 UK</option>
-                <option value="ar">🇸🇦 AR</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Mitte: Schritt-Indikatoren */}
-          <div className="hidden sm:flex items-center gap-1 text-xs">
-            {[
-              { id: "photo_intro", label: t.nav.step1 },
-              { id: "resume_upload", label: t.nav.step2 },
-              { id: "edit", label: t.nav.step3 },
-              { id: "result", label: t.nav.step4 }
-            ].map((s, i, arr) => {
-              const sIdx = STEPS.indexOf(s.id);
-              const isActive = step === s.id || (s.id === "edit" && ["confirm_edit", "ats", "select"].includes(step));
-              const isPast = currentStepIndex > sIdx;
-              return (
-                <div key={s.id} className="flex items-center gap-1">
-                  <span className={`px-2 py-1 rounded-md text-xs transition-all ${
-                    isActive ? "font-semibold text-[#1a3a2a] bg-[#c9a84c]"
-                    : isPast ? "text-[#c9a84c]/60"
-                    : "text-white/30"
-                  }`}>
-                    {s.label}
-                  </span>
-                  {i < arr.length - 1 && <span className="text-white/30">›</span>}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Rechts: User + Logout */}
-          {authUser && (
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-white/60 hidden md:block">{authUser.email}</span>
-              <button
-                onClick={logout}
-                className="text-xs text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-1 rounded-lg transition-colors"
-              >
-                Abmelden
-              </button>
-            </div>
-          )}
-        </div>
-      </nav>
+      <AppNavbar
+        title="Lebenslauf-Optimierer"
+        subtitle="Professionell. In Sekunden."
+        icon={FileText}
+        steps={[
+          { id: 1, label: t.nav.step1 },
+          { id: 2, label: t.nav.step2 },
+          { id: 3, label: t.nav.step3 },
+          { id: 4, label: t.nav.step4 },
+        ]}
+        currentStep={
+          ["photo_intro","photo_upload"].includes(step) ? 1
+          : step === "resume_upload" ? 2
+          : ["confirm_edit","edit","ats","select"].includes(step) ? 3
+          : step === "result" ? 4
+          : 0
+        }
+        lang={lang}
+        setLang={setLang}
+        user={authUser}
+        logout={logout}
+      />
 
       {/* ── Content ── */}
       <div className="max-w-6xl mx-auto px-6 py-10">
