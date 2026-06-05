@@ -9,6 +9,7 @@ import ImpressumModal from "@/components/anschreiben/ImpressumModal";
 import AgbModal from "@/components/anschreiben/AgbModal";
 import DsgvoModal from "@/components/anschreiben/DsgvoModal";
 import { FileText, Briefcase, Download, Loader2, ArrowLeft, PenLine } from "lucide-react";
+import AppNavbar from "@/components/AppNavbar";
 import { Link, useNavigate } from "react-router-dom";
 import JobfertigLogo from "@/components/JobfertigLogo";
 
@@ -52,84 +53,21 @@ export default function Generator() {
     <div dir={lang === "ar" ? "rtl" : "ltr"} className="min-h-screen bg-[#f1f5f9] font-inter">
 
       {/* ── Navbar ── */}
-      <nav className="sticky top-0 z-50 bg-[#1a3a2a] border-b border-[#2d5a3d] shadow-md">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
-
-          {/* Links: Zurück + Icon + Titel */}
-          <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-1.5 text-xs text-[#c9a84c]/80 hover:text-[#c9a84c] transition-colors mr-1">
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Startseite</span>
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center flex-shrink-0">
-                <PenLine className="w-3.5 h-3.5 text-[#f5c842]" />
-              </div>
-              <div className="flex flex-col leading-tight">
-                <span className="font-bold text-sm text-white tracking-tight">Anschreiben-Generator</span>
-                <span className="text-[10px] text-[#c9a84c]/80 hidden sm:block">Überzeugend. In Minuten.</span>
-              </div>
-            </div>
-            {/* Sprache */}
-            <div className="ml-2 relative">
-              <select
-                value={lang}
-                onChange={e => setLang(e.target.value)}
-                dir="ltr"
-                className="px-2 py-0.5 rounded-md border border-white/30 text-xs text-white bg-white/10 hover:bg-white/20 transition-all cursor-pointer appearance-none pr-5"
-                style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239ca3af'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 4px center" }}
-              >
-                <option value="de">🇩🇪 DE</option>
-                <option value="en">🇬🇧 EN</option>
-                <option value="uk">🇺🇦 UK</option>
-                <option value="ar">🇸🇦 AR</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Mitte: Schritt-Indikatoren */}
-          <div className="hidden sm:flex items-center gap-2">
-            {STEPS.map((s, i) => {
-              const active = step === s.id;
-              const done = step > s.id;
-              return (
-                <div key={s.id} className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${
-                      active ? "bg-[#c9a84c] text-[#1a3a2a] shadow-sm font-bold"
-                      : done ? "bg-white/20 text-white"
-                      : "bg-white/10 text-white/40"
-                    }`}>
-                      {done ? "✓" : s.id}
-                    </div>
-                    <span className={`text-xs font-medium hidden sm:inline transition-all ${
-                      active ? "text-[#c9a84c] font-semibold"
-                      : done ? "text-white/60"
-                      : "text-white/30"
-                    }`}>{s.label}</span>
-                  </div>
-                  {i < STEPS.length - 1 && (
-                    <div className={`w-8 h-px transition-all ${done ? "bg-[#c9a84c]/50" : "bg-white/20"}`} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Rechts: User + Logout */}
-          {user && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-white/60 hidden md:block">{user.email}</span>
-              <button
-                onClick={logout}
-                className="text-xs text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-1 rounded-lg transition-colors"
-              >
-                Abmelden
-              </button>
-            </div>
-          )}
-        </div>
-      </nav>
+      <AppNavbar
+        title="Anschreiben-Generator"
+        subtitle="Überzeugend. In Minuten."
+        icon={PenLine}
+        steps={[
+          { id: 1, label: "Stelle" },
+          { id: 2, label: "Lebenslauf" },
+          { id: 3, label: "Anschreiben" },
+        ]}
+        currentStep={step}
+        lang={lang}
+        setLang={setLang}
+        user={user}
+        logout={logout}
+      />
 
       {/* ── Content ── */}
       <main className="max-w-2xl mx-auto px-6 pt-10 pb-16">
